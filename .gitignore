@@ -1,0 +1,25 @@
+# Material do professor (enunciado do trabalho)
+*.pdf
+
+# Configurações pessoais de assistentes de IA
+*.claude
+.claude/
+CLAUDE.md
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Python (backend que virá na próxima etapa)
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Logs
+*.log
