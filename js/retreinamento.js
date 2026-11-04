@@ -158,30 +158,6 @@ function graficoReaisVsPrevistos(resultado, alvo) {
   });
 }
 
-// Métrica principal de cada alvo (usada nos gráficos de comparação)
-function metricaPrincipal(treino) {
-  return treino.alvo === 'autonomia' ? treino.metricas.r2 : treino.metricas.acuracia;
-}
-
-// Compara o último treino de cada modelo para o alvo atual
-function graficoComparacaoModelos(historico, alvo) {
-  const treinosDoAlvo = historico.filter((treino) => treino.alvo === alvo);
-  const chaves = Object.keys(MODELOS);
-  const valores = chaves.map((chave) => {
-    const treinos = treinosDoAlvo.filter((treino) => treino.modelo === chave);
-    return treinos.length > 0 ? metricaPrincipal(treinos[treinos.length - 1]) : 0;
-  });
-
-  desenharGrafico('grafico-comparacao', {
-    type: 'bar',
-    data: {
-      labels: chaves.map((chave) => MODELOS[chave].nome),
-      datasets: [{ label: alvo === 'autonomia' ? 'R²' : 'Acurácia', data: valores, backgroundColor: '#9333ea' }]
-    },
-    options: { scales: { y: { min: 0, max: 1 } } }
-  });
-}
-
 // Mostra como as métricas mudaram ao longo dos treinamentos do alvo atual
 function graficoEvolucao(historico, alvo) {
   const treinos = historico.filter((treino) => treino.alvo === alvo);
@@ -227,7 +203,6 @@ function treinar() {
 
   mostrarMetricas(metricas);
   graficoReaisVsPrevistos(resultado, alvo);
-  graficoComparacaoModelos(historico, alvo);
   graficoEvolucao(historico, alvo);
 
   document.getElementById('resultados').hidden = false;

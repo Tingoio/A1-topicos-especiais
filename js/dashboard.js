@@ -38,7 +38,7 @@ function mostrarIndicadores() {
 
   document.getElementById('kpi-total').textContent = resumo.total.toLocaleString('pt-BR');
   document.getElementById('kpi-variaveis').textContent = resumo.variaveis;
-  document.getElementById('kpi-media').textContent = media.toFixed(1) + ' mi';
+  document.getElementById('kpi-media').textContent = media.toFixed(1) + ' milhas';
   document.getElementById('kpi-elegiveis').textContent = resumo.cafv['Elegível'].toLocaleString('pt-BR');
   document.getElementById('kpi-nao-elegiveis').textContent = resumo.cafv['Não elegível'].toLocaleString('pt-BR');
   document.getElementById('kpi-desconhecidos').textContent = resumo.cafv['Desconhecido'].toLocaleString('pt-BR');
@@ -111,7 +111,7 @@ function finalizarLeitura() {
   graficoAutonomia();
   graficoAnos();
   graficoCafv();
-  mostrarMensagem('status', 'Dataset carregado. A média e o histograma de autonomia ignoram os valores 0 (autonomia não pesquisada).', 'info');
+  document.getElementById('status').style.display = 'none';
 }
 
 // Lê o dataset em partes para não guardar as 300 mil linhas na memória
