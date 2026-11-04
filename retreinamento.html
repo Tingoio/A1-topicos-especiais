@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retreinamento - Veículos Elétricos WA</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="menu">
+    <span class="logo">Veículos Elétricos WA</span>
+    <a href="index.html">Visão geral</a>
+    <a href="previsoes.html">Previsões</a>
+    <a href="retreinamento.html" class="ativo">Retreinamento</a>
+  </nav>
+
+  <main>
+    <h1>Retreinamento</h1>
+
+    <section class="painel formulario">
+      <label>
+        Nova base CSV (até 100 MB, precisa conter Electric Range)
+        <input type="file" id="arquivo" accept=".csv">
+      </label>
+      <p id="mensagem-upload" class="mensagem info">
+        Colunas obrigatórias: Model Year, Make, Model, Electric Vehicle Type, Electric Range,
+        Clean Alternative Fuel Vehicle (CAFV) Eligibility.
+      </p>
+
+      <label>
+        Variável-alvo
+        <select id="alvo">
+          <option value="autonomia">Electric Range</option>
+          <option value="cafv">CAFV</option>
+        </select>
+      </label>
+
+      <label>
+        Algoritmo
+        <select id="modelo">
+          <option value="linear">Regressão Linear</option>
+          <option value="arvore">Árvore de Decisão</option>
+          <option value="floresta">Random Forest</option>
+        </select>
+      </label>
+      <p id="descricao-modelo" class="descricao"></p>
+
+      <p id="sem-parametros" class="descricao">Sem parâmetros obrigatórios na configuração básica.</p>
+      <label id="campo-n-estimators">
+        Quantidade de árvores (n_estimators)
+        <input type="number" id="n-estimators" value="100" min="1" max="500">
+      </label>
+      <label id="campo-max-depth">
+        Profundidade máxima (max_depth)
+        <input type="number" id="max-depth" value="5" min="1" max="30">
+      </label>
+
+      <button id="botao-treinar" disabled>Treinar</button>
+    </section>
+
+    <section id="resultados" hidden>
+      <p id="mensagem-treino" class="mensagem sucesso"></p>
+      <div id="metricas" class="cards"></div>
+
+      <div class="graficos">
+        <div class="painel">
+          <h2>Valores reais vs. previstos</h2>
+          <canvas id="grafico-reais-previstos"></canvas>
+        </div>
+        <div class="painel">
+          <h2>Desempenho entre modelos</h2>
+          <canvas id="grafico-comparacao"></canvas>
+        </div>
+        <div class="painel">
+          <h2>Evolução das métricas entre treinamentos</h2>
+          <canvas id="grafico-evolucao"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/retreinamento.js"></script>
+</body>
+</html>

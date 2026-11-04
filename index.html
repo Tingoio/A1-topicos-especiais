@@ -1,173 +1,55 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f3ef">
-  <title>Análise de veículos</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visão geral - Veículos Elétricos WA</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#overview" aria-label="AutoDados, início">
-      <span class="brand-mark" aria-hidden="true">A</span>
-      <span>AutoDados</span>
-    </a>
-    <nav class="main-nav" aria-label="Navegação principal">
-      <a class="nav-link active" href="#overview">Visão geral</a>
-      <a class="nav-link" href="#dataset">Dados</a>
-      <a class="nav-link" href="#model">Modelo</a>
-    </nav>
-    <div class="api-indicator"><span class="status-dot"></span><span id="apiStatus">API desconectada</span></div>
-  </header>
+  <nav class="menu">
+    <span class="logo">Veículos Elétricos</span>
+    <a href="index.html" class="ativo">Visão geral</a>
+    <a href="previsoes.html">Previsões</a>
+    <a href="retreinamento.html">Retreinamento</a>
+  </nav>
 
-  <main id="overview" class="page-shell">
-    <section class="page-heading">
-      <div>
-        <p class="eyebrow">LABORATÓRIO DE DADOS</p>
-        <h1>Análise de veículos</h1>
-        <p class="page-description">Explore um conjunto de dados e prepare análises e predições.</p>
-      </div>
-      <label class="button button-primary upload-button" for="fileInput">
-        <span aria-hidden="true">＋</span> Importar dados
-      </label>
-      <input id="fileInput" class="visually-hidden" type="file" accept=".csv,.xml,.json,text/csv,application/json,application/xml,text/xml">
+  <main>
+    <h1>Visão geral do dataset</h1>
+    <p id="status" class="mensagem info">Carregando dataset...</p>
+
+    <section class="cards">
+      <div class="card"><span>Total de registros</span><strong id="kpi-total">-</strong></div>
+      <div class="card"><span>Quantidade de variáveis</span><strong id="kpi-variaveis">-</strong></div>
+      <div class="card"><span>Média de autonomia elétrica</span><strong id="kpi-media">-</strong></div>
+      <div class="card"><span>Elegíveis CAFV</span><strong id="kpi-elegiveis">-</strong></div>
+      <div class="card"><span>Não elegíveis CAFV</span><strong id="kpi-nao-elegiveis">-</strong></div>
+      <div class="card"><span>Elegibilidade desconhecida</span><strong id="kpi-desconhecidos">-</strong></div>
     </section>
 
-    <section class="upload-strip" aria-label="Importar conjunto de dados">
-      <div class="upload-copy">
-        <span class="upload-icon" aria-hidden="true">↥</span>
-        <div>
-          <strong id="datasetName">Nenhum conjunto de dados carregado</strong>
-          <p id="uploadMessage">Selecione um arquivo estruturado para começar.</p>
-        </div>
+    <section class="graficos">
+      <div class="painel">
+        <h2>Veículos por fabricante (top 10)</h2>
+        <canvas id="grafico-fabricantes"></canvas>
       </div>
-      <span class="format-note">CSV · XML · JSON</span>
-    </section>
-
-    <section class="metrics" aria-label="Resumo do conjunto de dados">
-      <article class="metric">
-        <span class="metric-label">REGISTROS</span>
-        <strong id="rowCount">—</strong>
-        <span class="metric-foot">linhas carregadas</span>
-      </article>
-      <article class="metric">
-        <span class="metric-label">VARIÁVEIS</span>
-        <strong id="columnCount">—</strong>
-        <span class="metric-foot">colunas detectadas</span>
-      </article>
-      <article class="metric">
-        <span class="metric-label">VALORES AUSENTES</span>
-        <strong id="missingCount">—</strong>
-        <span class="metric-foot">células vazias</span>
-      </article>
-      <article class="metric metric-accent">
-        <span class="metric-label">ALVO DO MODELO</span>
-        <strong id="targetSummary">—</strong>
-        <span class="metric-foot">variável a prever</span>
-      </article>
-    </section>
-
-    <section id="dataset" class="content-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">EXPLORAÇÃO</p>
-          <h2>Dados e distribuição</h2>
-        </div>
-        <div class="chart-controls">
-          <label class="visually-hidden" for="chartColumn">Variável do gráfico</label>
-          <select id="chartColumn" disabled><option>Importe um arquivo</option></select>
-          <div class="segmented" role="group" aria-label="Tipo de gráfico">
-            <button class="segment active" type="button" data-chart="bar" aria-pressed="true">Barras</button>
-            <button class="segment" type="button" data-chart="pie" aria-pressed="false">Pizza</button>
-          </div>
-        </div>
+      <div class="painel">
+        <h2>Distribuição de autonomia elétrica</h2>
+        <canvas id="grafico-autonomia"></canvas>
       </div>
-      <div class="analysis-grid">
-        <article class="panel chart-panel">
-          <div class="panel-heading">
-            <div><h3 id="chartTitle">Distribuição de valores</h3><p id="chartSubtitle">A visualização será gerada após a importação.</p></div>
-            <span class="panel-tag">ANÁLISE</span>
-          </div>
-          <div id="chartArea" class="chart-area empty-state">Aguardando conjunto de dados</div>
-        </article>
-        <!-- Visualização geográfica pausada até a confirmação dos requisitos.
-        <article class="panel map-panel">
-          <div class="panel-heading">
-            <div><h3>Mapa de coordenadas</h3><p id="mapSubtitle">Localizações detectadas no arquivo</p></div>
-            <span class="panel-tag">GEOGRÁFICO</span>
-          </div>
-          <div id="mapArea" class="map-area empty-state">O mapa será exibido quando houver colunas de latitude e longitude.</div>
-          <canvas id="mapCanvas" class="map-canvas" aria-label="Mapa de pontos geográficos" hidden></canvas>
-        </article>
-        -->
+      <div class="painel">
+        <h2>Veículos por ano de fabricação</h2>
+        <canvas id="grafico-anos"></canvas>
       </div>
-      <article class="panel table-panel">
-        <div class="panel-heading table-heading">
-          <div><h3>Prévia dos registros</h3><p id="tableSubtitle">As primeiras linhas do arquivo aparecerão aqui.</p></div>
-          <span class="panel-tag">PRÉVIA</span>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead id="tableHead"><tr><th>Sem dados</th></tr></thead>
-            <tbody id="tableBody"><tr><td class="table-empty">Importe um arquivo para visualizar os registros.</td></tr></tbody>
-          </table>
-        </div>
-      </article>
-    </section>
-
-    <section id="model" class="content-section model-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">APRENDIZADO DE MÁQUINA</p>
-          <h2>Treinamento e predição</h2>
-        </div>
-        <span id="modelStatus" class="model-status">Nenhum modelo treinado</span>
-      </div>
-      <div class="model-grid">
-        <article class="panel model-panel">
-          <div class="panel-heading">
-            <div><h3>Configurar treinamento</h3><p>Escolha a variável-alvo e os parâmetros do modelo.</p></div>
-          </div>
-          <div class="form-grid">
-            <label class="field">Variável-alvo
-              <select id="targetColumn" disabled><option>Importe um arquivo</option></select>
-            </label>
-            <label class="field">Tipo de tarefa
-              <select id="taskType" disabled>
-                <option value="regression">Regressão</option>
-                <option value="classification">Classificação</option>
-              </select>
-            </label>
-            <label class="field">Modelo
-              <select id="modelType" disabled></select>
-            </label>
-            <label class="field">Parâmetro
-              <select id="modelParameter" disabled></select>
-            </label>
-          </div>
-          <div class="training-actions">
-            <p id="trainingMessage" role="status">Importe dados para configurar o treinamento.</p>
-            <button id="trainButton" class="button button-primary" type="button" disabled>Treinar modelo</button>
-          </div>
-        </article>
-        <article class="panel prediction-panel">
-          <div class="panel-heading">
-            <div><h3>Fazer predição</h3><p>Informe os atributos para estimar o valor-alvo.</p></div>
-          </div>
-          <form id="predictionForm">
-            <div id="predictionFields" class="prediction-fields empty-state">Treine um modelo para preencher os atributos.</div>
-            <div class="prediction-footer">
-              <strong id="predictionResult" role="status">Resultado aparecerá aqui</strong>
-              <button id="predictButton" class="button button-secondary" type="submit" disabled>Predizer</button>
-            </div>
-          </form>
-        </article>
+      <div class="painel">
+        <h2>Elegibilidade CAFV</h2>
+        <canvas id="grafico-cafv"></canvas>
       </div>
     </section>
-
-    <footer class="page-footer"><span>AutoDados</span><span>Interface preparada para integração com API Python</span></footer>
   </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 </html>

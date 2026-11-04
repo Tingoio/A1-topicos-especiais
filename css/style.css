@@ -1,0 +1,196 @@
+/* style.css — estilo único usado pelas três páginas */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Menu de navegação */
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #1e3a8a;
+}
+
+.menu .logo {
+  color: #fff;
+  font-weight: bold;
+  margin-right: auto;
+}
+
+.menu a {
+  color: #c7d2fe;
+  text-decoration: none;
+}
+
+.menu a.ativo,
+.menu a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  margin: 8px 0 16px;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+/* Cards de indicadores e métricas */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card span {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.card strong {
+  display: block;
+  font-size: 24px;
+  margin-top: 6px;
+}
+
+/* Grade de gráficos */
+.graficos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 16px;
+}
+
+.painel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 0;
+}
+
+/* Formulários das telas de Previsões e Retreinamento */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+  margin-bottom: 16px;
+}
+
+.formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* Garante que o atributo hidden esconda também os labels (que usam display: flex) */
+[hidden] {
+  display: none !important;
+}
+
+input,
+select {
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+button {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.descricao {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Mensagens de status */
+.mensagem {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.mensagem.info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.mensagem.sucesso {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.mensagem.erro {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Tabela de previsões */
+.tabela-rolavel {
+  max-height: 400px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+}

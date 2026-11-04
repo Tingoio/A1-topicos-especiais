@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Previsões - Veículos Elétricos WA</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="menu">
+    <span class="logo">Veículos Elétricos WA</span>
+    <a href="index.html">Visão geral</a>
+    <a href="previsoes.html" class="ativo">Previsões</a>
+    <a href="retreinamento.html">Retreinamento</a>
+  </nav>
+
+  <main>
+    <h1>Previsões</h1>
+
+    <section class="painel formulario">
+      <label>
+        Arquivo CSV (até 100 MB, a coluna Electric Range não é necessária)
+        <input type="file" id="arquivo" accept=".csv">
+      </label>
+      <p id="mensagem-upload" class="mensagem info">
+        Colunas obrigatórias: Model Year, Make, Model, Electric Vehicle Type.
+      </p>
+
+      <label>
+        Variável prevista
+        <select id="alvo">
+          <option value="autonomia">Electric Range</option>
+          <option value="cafv">CAFV</option>
+        </select>
+      </label>
+
+      <label>
+        Modelo
+        <select id="modelo"></select>
+      </label>
+      <p id="descricao-modelo" class="descricao"></p>
+
+      <button id="botao-prever" disabled>Prever</button>
+    </section>
+
+    <section id="resultados" hidden>
+      <div class="cards">
+        <div class="card"><span>Registros processados</span><strong id="total-processados">-</strong></div>
+        <div class="card"><span>Previsões realizadas</span><strong id="total-previsoes">-</strong></div>
+      </div>
+
+      <div class="graficos">
+        <div class="painel">
+          <h2>Veículos e valores previstos</h2>
+          <p id="aviso-tabela" class="descricao"></p>
+          <div class="tabela-rolavel">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fabricante</th>
+                  <th>Modelo</th>
+                  <th>Ano</th>
+                  <th>Tipo</th>
+                  <th id="coluna-previsao">Previsto</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-corpo"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="painel">
+          <h2>Distribuição das previsões</h2>
+          <canvas id="grafico-previsoes"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/previsoes.js"></script>
+</body>
+</html>
