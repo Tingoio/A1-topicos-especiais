@@ -1,4 +1,4 @@
-# Veículos Elétricos WA — Front-end
+# Veículos Elétricos — Front-end
 
 Front-end do trabalho final de **Tópicos Especiais em Software**: análise de dados e Machine Learning sobre a população de veículos elétricos do estado de Washington (EUA).
 
