@@ -23,3 +23,6 @@ __pycache__/
 
 # Logs
 *.log
+
+# Material pessoal de apoio para a defesa do código
+README-DEFESA.md

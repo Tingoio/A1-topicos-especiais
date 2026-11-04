@@ -111,6 +111,57 @@ function graficoPrevisoes(previsoes, alvo) {
   });
 }
 
+// Resume as previsões de um grupo: autonomia média ou % de elegíveis
+function resumoDoGrupo(previsoesDoGrupo, alvo) {
+  if (alvo === 'autonomia') return arredondar(media(previsoesDoGrupo));
+  const elegiveis = previsoesDoGrupo.filter((valor) => valor === 'Elegível').length;
+  return arredondar((elegiveis / previsoesDoGrupo.length) * 100);
+}
+
+// Texto do eixo Y dos gráficos por grupo
+function rotuloDoResumo(alvo) {
+  return alvo === 'autonomia' ? 'Autonomia média prevista (milhas)' : '% previsto como elegível';
+}
+
+// Desenha um gráfico com o resumo das previsões de cada grupo
+function graficoPorGrupo(idCanvas, tipoGrafico, grupos, chaves, alvo) {
+  desenharGrafico(idCanvas, {
+    type: tipoGrafico,
+    data: {
+      labels: chaves,
+      datasets: [{
+        label: rotuloDoResumo(alvo),
+        data: chaves.map((chave) => resumoDoGrupo(grupos[chave], alvo)),
+        backgroundColor: '#2563eb',
+        borderColor: '#2563eb'
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: alvo === 'cafv' ? 100 : undefined,
+          title: { display: true, text: rotuloDoResumo(alvo) }
+        }
+      }
+    }
+  });
+}
+
+// Compara as previsões entre elétricos puros (BEV) e híbridos (PHEV)
+function graficoPorTipo(linhas, previsoes, alvo) {
+  const grupos = agruparPor(linhas, previsoes, (linha) => siglaTipo(linha[COL.tipo] || ''));
+  graficoPorGrupo('grafico-por-tipo', 'bar', grupos, Object.keys(grupos).sort(), alvo);
+}
+
+// Mostra como as previsões variam com o ano de fabricação
+function graficoPorAno(linhas, previsoes, alvo) {
+  const grupos = agruparPor(linhas, previsoes, (linha) => linha[COL.ano]);
+  const anos = Object.keys(grupos).sort((a, b) => Number(a) - Number(b));
+  graficoPorGrupo('grafico-por-ano', 'line', grupos, anos, alvo);
+}
+
 // Executa a previsão e mostra os resultados
 function prever() {
   const alvo = document.getElementById('alvo').value;
@@ -124,6 +175,8 @@ function prever() {
 
   mostrarTabela(linhasDoArquivo, previsoes);
   graficoPrevisoes(previsoes, alvo);
+  graficoPorTipo(linhasDoArquivo, previsoes, alvo);
+  graficoPorAno(linhasDoArquivo, previsoes, alvo);
   document.getElementById('resultados').hidden = false;
 }
 

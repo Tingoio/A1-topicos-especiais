@@ -71,7 +71,7 @@ function treinarSimulado(linhas, alvo, modelo, parametros) {
   if (alvo === 'autonomia') {
     const reais = amostra.map((linha) => Number(linha[COL.autonomia]));
     const previstos = reais.map((real) => Math.round(real * (1 + (Math.random() * 2 - 1) * erro)));
-    return { reais, previstos };
+    return { amostra, reais, previstos };
   }
 
   const reais = amostra.map((linha) => nomeCafv(linha[COL.cafv]));
@@ -79,7 +79,7 @@ function treinarSimulado(linhas, alvo, modelo, parametros) {
     if (Math.random() > erro) return real;
     return real === 'Elegível' ? 'Não elegível' : 'Elegível';
   });
-  return { reais, previstos };
+  return { amostra, reais, previstos };
 }
 
 // Calcula MAE, RMSE e R² a partir dos valores reais e previstos
@@ -158,6 +158,94 @@ function graficoReaisVsPrevistos(resultado, alvo) {
   });
 }
 
+// Electric Range: histograma do erro (previsto - real).
+// CAFV: matriz de confusão em barras empilhadas (classe real x classe prevista).
+function graficoErro(resultado, alvo) {
+  const titulo = document.getElementById('titulo-erro');
+
+  if (alvo === 'autonomia') {
+    titulo.textContent = 'Distribuição do erro';
+    const TAMANHO_FAIXA = 20;
+    const contagem = {};
+    resultado.reais.forEach((real, i) => {
+      const inicio = Math.floor((resultado.previstos[i] - real) / TAMANHO_FAIXA) * TAMANHO_FAIXA;
+      contagem[inicio] = (contagem[inicio] || 0) + 1;
+    });
+    const inicios = Object.keys(contagem).map(Number).sort((a, b) => a - b);
+
+    desenharGrafico('grafico-erro', {
+      type: 'bar',
+      data: {
+        labels: inicios.map((inicio) => inicio + ' a ' + (inicio + TAMANHO_FAIXA - 1)),
+        datasets: [{ label: 'Veículos', data: inicios.map((inicio) => contagem[inicio]), backgroundColor: '#f59e0b' }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: 'Erro: previsto - real (milhas)' } },
+          y: { title: { display: true, text: 'Veículos' } }
+        }
+      }
+    });
+    return;
+  }
+
+  titulo.textContent = 'Acertos e erros por classe (matriz de confusão)';
+  const cores = { 'Elegível': '#16a34a', 'Não elegível': '#dc2626', 'Desconhecido': '#9ca3af' };
+  const presentes = new Set(resultado.reais.concat(resultado.previstos));
+  const classes = Object.keys(cores).filter((classe) => presentes.has(classe));
+
+  desenharGrafico('grafico-erro', {
+    type: 'bar',
+    data: {
+      labels: classes,
+      datasets: classes.map((previsto) => ({
+        label: 'Previsto: ' + previsto,
+        data: classes.map((real) =>
+          resultado.reais.filter((valor, i) => valor === real && resultado.previstos[i] === previsto).length),
+        backgroundColor: cores[previsto]
+      }))
+    },
+    options: {
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Classe real' } },
+        y: { stacked: true, title: { display: true, text: 'Veículos' } }
+      }
+    }
+  });
+}
+
+// Erro médio (MAE) ou acurácia dos 10 fabricantes com mais veículos na amostra
+function graficoPorFabricante(resultado, alvo) {
+  const indices = resultado.amostra.map((linha, i) => i);
+  const grupos = agruparPor(resultado.amostra, indices, (linha) => linha[COL.fabricante]);
+  const fabricantes = Object.keys(grupos)
+    .sort((a, b) => grupos[b].length - grupos[a].length)
+    .slice(0, 10);
+
+  const valores = fabricantes.map((fabricante) => {
+    const doFabricante = grupos[fabricante];
+    if (alvo === 'autonomia') {
+      return arredondar(media(doFabricante.map((i) => Math.abs(resultado.previstos[i] - resultado.reais[i]))));
+    }
+    const acertos = doFabricante.filter((i) => resultado.previstos[i] === resultado.reais[i]).length;
+    return arredondar((acertos / doFabricante.length) * 100);
+  });
+  const rotulo = alvo === 'autonomia' ? 'MAE (milhas)' : 'Acurácia (%)';
+
+  desenharGrafico('grafico-por-fabricante', {
+    type: 'bar',
+    data: { labels: fabricantes, datasets: [{ label: rotulo, data: valores, backgroundColor: '#9333ea' }] },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: alvo === 'cafv' ? 100 : undefined, title: { display: true, text: rotulo } }
+      }
+    }
+  });
+}
+
 // Mostra como as métricas mudaram ao longo dos treinamentos do alvo atual
 function graficoEvolucao(historico, alvo) {
   const treinos = historico.filter((treino) => treino.alvo === alvo);
@@ -204,6 +292,8 @@ function treinar() {
   mostrarMetricas(metricas);
   graficoReaisVsPrevistos(resultado, alvo);
   graficoEvolucao(historico, alvo);
+  graficoErro(resultado, alvo);
+  graficoPorFabricante(resultado, alvo);
 
   document.getElementById('resultados').hidden = false;
   mostrarMensagem('mensagem-treino', 'Novo modelo (' + MODELOS[modelo].nome + ' - ' + ALVOS[alvo] +

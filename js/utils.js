@@ -112,6 +112,35 @@ function contarValores(lista) {
   return contagem;
 }
 
+// Separa os valores em grupos usando uma chave tirada de cada linha (ex.: o ano ou o fabricante).
+// valores[i] corresponde a linhas[i]. Linhas com a chave vazia são ignoradas.
+function agruparPor(linhas, valores, pegarChave) {
+  const grupos = {};
+  linhas.forEach((linha, i) => {
+    const chave = pegarChave(linha);
+    if (!chave) return;
+    if (!grupos[chave]) grupos[chave] = [];
+    grupos[chave].push(valores[i]);
+  });
+  return grupos;
+}
+
+// Média de uma lista de números
+function media(lista) {
+  return lista.reduce((soma, valor) => soma + valor, 0) / lista.length;
+}
+
+// Arredonda para 1 casa decimal (deixa os tooltips dos gráficos mais limpos)
+function arredondar(valor) {
+  return Math.round(valor * 10) / 10;
+}
+
+// "Battery Electric Vehicle (BEV)" -> "BEV"
+function siglaTipo(tipo) {
+  const sigla = tipo.match(/\(([^)]+)\)/);
+  return sigla ? sigla[1] : tipo;
+}
+
 // Histórico de treinamentos salvo no navegador (usado no Retreinamento e nas Previsões)
 function carregarHistorico() {
   try {
