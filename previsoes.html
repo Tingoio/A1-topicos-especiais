@@ -19,74 +19,86 @@
 
     <section class="painel formulario">
       <label>
-        Arquivo CSV (até 100 MB, a coluna Electric Range não é necessária)
+        Arquivo CSV - até 100 MB
         <input type="file" id="arquivo" accept=".csv">
       </label>
       <p id="mensagem-upload" class="mensagem info">
         Colunas obrigatórias: Model Year, Make, Model, Electric Vehicle Type.
       </p>
 
-      <label>
-        Variável prevista
-        <select id="alvo">
-          <option value="autonomia">Electric Range</option>
-          <option value="cafv">CAFV</option>
-        </select>
-      </label>
+      <fieldset id="alvo" class="opcoes">
+        <legend>Variável alvo</legend>
+        <label><input type="checkbox" value="autonomia" checked> Electric Range</label>
+        <label><input type="checkbox" value="cafv"> CAFV</label>
+        <p class="erro-selecao" hidden>Selecione ao menos uma opção.</p>
+      </fieldset>
 
-      <label>
-        Modelo
-        <select id="modelo"></select>
-      </label>
+      <fieldset id="modelo" class="opcoes">
+        <legend>Modelo</legend>
+        <p class="erro-selecao" hidden>Selecione ao menos uma opção.</p>
+      </fieldset>
       <p id="descricao-modelo" class="descricao"></p>
 
       <button id="botao-prever" disabled>Prever</button>
     </section>
 
-    <section id="resultados" hidden>
-      <div class="cards">
-        <div class="card"><span>Registros processados</span><strong id="total-processados">-</strong></div>
-        <div class="card"><span>Previsões realizadas</span><strong id="total-previsoes">-</strong></div>
-      </div>
+    <div id="resultados"></div>
 
-      <div class="graficos">
-        <div class="painel">
-          <h2>Veículos e valores previstos</h2>
-          <p id="aviso-tabela" class="descricao"></p>
-          <div class="tabela-rolavel">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fabricante</th>
-                  <th>Modelo</th>
-                  <th>Ano</th>
-                  <th>Tipo</th>
-                  <th id="coluna-previsao">Previsto</th>
-                </tr>
-              </thead>
-              <tbody id="tabela-corpo"></tbody>
-            </table>
+    <!-- Copiado uma vez para cada combinação variável × modelo marcada -->
+    <template id="modelo-bloco">
+      <section class="bloco-resultado">
+        <h2 id="titulo-bloco"></h2>
+        <div class="cards">
+          <div class="card"><span>Registros processados</span><strong id="total-processados">-</strong></div>
+          <div class="card"><span>Previsões realizadas</span><strong id="total-previsoes">-</strong></div>
+        </div>
+
+        <div class="graficos">
+          <div class="painel">
+            <h2>Veículos e valores previstos</h2>
+            <p id="aviso-tabela" class="descricao"></p>
+            <div class="tabela-rolavel">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fabricante</th>
+                    <th>Modelo</th>
+                    <th>Ano</th>
+                    <th>Tipo</th>
+                    <th id="coluna-previsao">Previsto</th>
+                  </tr>
+                </thead>
+                <tbody id="tabela-corpo"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="painel">
+            <h2>Distribuição das previsões</h2>
+            <canvas id="grafico-previsoes"></canvas>
+          </div>
+          <div class="painel">
+            <h2>Previsão por tipo de veículo</h2>
+            <canvas id="grafico-por-tipo"></canvas>
+          </div>
+          <div class="painel">
+            <h2>Previsão por ano de fabricação</h2>
+            <canvas id="grafico-por-ano"></canvas>
+          </div>
+          <div class="painel painel-largo">
+            <h2 id="titulo-grafico-modelo">Modelo</h2>
+            <p id="descricao-grafico-modelo" class="descricao"></p>
+            <canvas id="grafico-modelo"></canvas>
+            <div id="arvore" class="arvore-rolavel" hidden></div>
           </div>
         </div>
-        <div class="painel">
-          <h2>Distribuição das previsões</h2>
-          <canvas id="grafico-previsoes"></canvas>
-        </div>
-        <div class="painel">
-          <h2>Previsão por tipo de veículo</h2>
-          <canvas id="grafico-por-tipo"></canvas>
-        </div>
-        <div class="painel">
-          <h2>Previsão por ano de fabricação</h2>
-          <canvas id="grafico-por-ano"></canvas>
-        </div>
-      </div>
-    </section>
+      </section>
+    </template>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/arvore.js"></script>
   <script src="js/previsoes.js"></script>
 </body>
 </html>

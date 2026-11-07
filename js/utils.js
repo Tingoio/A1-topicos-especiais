@@ -77,8 +77,55 @@ function mostrarMensagem(idElemento, texto, tipo) {
   elemento.className = 'mensagem ' + tipo;
 }
 
+// ---------- Grupos de checkboxes (variável alvo, modelo, algoritmo) ----------
+
+// Adiciona um checkbox (caixinha + nome) ao grupo, antes da mensagem de erro do grupo
+function adicionarCheckbox(idGrupo, valor, texto, marcado) {
+  const label = document.createElement('label');
+  const caixa = document.createElement('input');
+  caixa.type = 'checkbox';
+  caixa.value = valor;
+  caixa.checked = Boolean(marcado);
+  label.append(caixa, ' ' + texto);
+  const grupo = document.getElementById(idGrupo);
+  grupo.insertBefore(label, grupo.querySelector('.erro-selecao'));
+}
+
+// Valores dos checkboxes marcados em um grupo
+function valoresMarcados(idGrupo) {
+  return [...document.querySelectorAll('#' + idGrupo + ' input:checked')].map((caixa) => caixa.value);
+}
+
+// Mostra a mensagem em vermelho dos grupos sem nenhuma caixinha marcada.
+// Retorna true se todos os grupos têm pelo menos uma opção marcada.
+function validarSelecao(idsGrupos) {
+  let tudoCerto = true;
+  idsGrupos.forEach((idGrupo) => {
+    const vazio = valoresMarcados(idGrupo).length === 0;
+    document.querySelector('#' + idGrupo + ' .erro-selecao').hidden = !vazio;
+    if (vazio) tudoCerto = false;
+  });
+  return tudoCerto;
+}
+
+// Copia o conteúdo de um <template> e acrescenta o sufixo a todos os ids,
+// para que cada combinação variável × modelo tenha seus próprios gráficos na página
+function clonarBloco(idTemplate, sufixo) {
+  const bloco = document.getElementById(idTemplate).content.firstElementChild.cloneNode(true);
+  bloco.querySelectorAll('[id]').forEach((elemento) => { elemento.id += sufixo; });
+  return bloco;
+}
+
 // Guarda os gráficos criados para poder apagá-los antes de redesenhar
 const graficos = {};
+
+// Apaga todos os gráficos da página (antes de gerar um novo conjunto de resultados)
+function apagarGraficos() {
+  Object.keys(graficos).forEach((id) => {
+    graficos[id].destroy();
+    delete graficos[id];
+  });
+}
 
 // Cria (ou recria) um gráfico Chart.js no canvas indicado
 function desenharGrafico(idCanvas, configuracao) {

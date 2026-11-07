@@ -13,7 +13,7 @@ let linhasDoArquivo = [];
 function aoSelecionarArquivo(evento) {
   const arquivo = evento.target.files[0];
   linhasDoArquivo = [];
-  document.getElementById('botao-treinar').disabled = true;
+  aoMudarSelecao();
 
   if (!arquivo) return;
 
@@ -32,19 +32,39 @@ function aoSelecionarArquivo(evento) {
 
     // Electric Range = 0 significa "não pesquisado", então essas linhas não servem para treino
     linhasDoArquivo = linhas.filter((linha) => Number(linha[COL.autonomia]) > 0);
-    document.getElementById('botao-treinar').disabled = false;
+    aoMudarSelecao();
     mostrarMensagem('mensagem-upload', 'Arquivo válido: ' + linhasDoArquivo.length.toLocaleString('pt-BR') +
       ' registros com autonomia pesquisada (de ' + linhas.length.toLocaleString('pt-BR') + ').', 'sucesso');
   });
 }
 
-// Mostra apenas os parâmetros do modelo escolhido
+// Monta os checkboxes de algoritmo (o primeiro já vem marcado)
+function carregarOpcoesDeModelo() {
+  Object.entries(MODELOS).forEach(([chave, modelo], i) => adicionarCheckbox('modelo', chave, modelo.nome, i === 0));
+}
+
+// Mostra a descrição e os parâmetros dos algoritmos marcados
 function mostrarParametros() {
-  const modelo = document.getElementById('modelo').value;
-  document.getElementById('descricao-modelo').textContent = MODELOS[modelo].descricao;
-  document.getElementById('campo-max-depth').hidden = modelo === 'linear';
-  document.getElementById('campo-n-estimators').hidden = modelo !== 'floresta';
-  document.getElementById('sem-parametros').hidden = modelo !== 'linear';
+  const modelos = valoresMarcados('modelo');
+  const descricao = document.getElementById('descricao-modelo');
+  descricao.innerHTML = '';
+  modelos.forEach((modelo) => {
+    const linha = document.createElement('div');
+    linha.textContent = MODELOS[modelo].nome + ': ' + MODELOS[modelo].descricao;
+    descricao.appendChild(linha);
+  });
+
+  const usaArvores = modelos.includes('arvore') || modelos.includes('floresta');
+  document.getElementById('campo-max-depth').hidden = !usaArvores;
+  document.getElementById('campo-n-estimators').hidden = !modelos.includes('floresta');
+  document.getElementById('sem-parametros').hidden = !modelos.includes('linear') || usaArvores;
+}
+
+// Valida os checkboxes e libera o botão Treinar só com arquivo válido e ao menos uma opção em cada grupo
+function aoMudarSelecao() {
+  const selecaoValida = validarSelecao(['alvo', 'modelo']);
+  mostrarParametros();
+  document.getElementById('botao-treinar').disabled = linhasDoArquivo.length === 0 || !selecaoValida;
 }
 
 // Lê os parâmetros preenchidos na tela
@@ -111,8 +131,8 @@ function metricasClassificacao(reais, previstos) {
 }
 
 // Escreve as métricas nos cards
-function mostrarMetricas(metricas) {
-  const cards = document.getElementById('metricas');
+function mostrarMetricas(metricas, s) {
+  const cards = document.getElementById('metricas' + s);
   if (metricas.acuracia !== undefined) {
     cards.innerHTML = '<div class="card"><span>Acurácia</span><strong>' + (metricas.acuracia * 100).toFixed(1) + '%</strong></div>';
     return;
@@ -124,11 +144,11 @@ function mostrarMetricas(metricas) {
 }
 
 // Gráfico de valores reais vs. previstos
-function graficoReaisVsPrevistos(resultado, alvo) {
+function graficoReaisVsPrevistos(resultado, alvo, s) {
   if (alvo === 'autonomia') {
     // Dispersão: quanto mais perto da diagonal, melhor a previsão
     const pontos = resultado.reais.map((real, i) => ({ x: real, y: resultado.previstos[i] }));
-    desenharGrafico('grafico-reais-previstos', {
+    desenharGrafico('grafico-reais-previstos' + s, {
       type: 'scatter',
       data: { datasets: [{ label: 'Veículos', data: pontos, backgroundColor: '#2563eb' }] },
       options: {
@@ -146,7 +166,7 @@ function graficoReaisVsPrevistos(resultado, alvo) {
   const reais = contarValores(resultado.reais);
   const previstos = contarValores(resultado.previstos);
   const classes = ['Elegível', 'Não elegível'];
-  desenharGrafico('grafico-reais-previstos', {
+  desenharGrafico('grafico-reais-previstos' + s, {
     type: 'bar',
     data: {
       labels: classes,
@@ -160,8 +180,8 @@ function graficoReaisVsPrevistos(resultado, alvo) {
 
 // Electric Range: histograma do erro (previsto - real).
 // CAFV: matriz de confusão em barras empilhadas (classe real x classe prevista).
-function graficoErro(resultado, alvo) {
-  const titulo = document.getElementById('titulo-erro');
+function graficoErro(resultado, alvo, s) {
+  const titulo = document.getElementById('titulo-erro' + s);
 
   if (alvo === 'autonomia') {
     titulo.textContent = 'Distribuição do erro';
@@ -173,7 +193,7 @@ function graficoErro(resultado, alvo) {
     });
     const inicios = Object.keys(contagem).map(Number).sort((a, b) => a - b);
 
-    desenharGrafico('grafico-erro', {
+    desenharGrafico('grafico-erro' + s, {
       type: 'bar',
       data: {
         labels: inicios.map((inicio) => inicio + ' a ' + (inicio + TAMANHO_FAIXA - 1)),
@@ -195,7 +215,7 @@ function graficoErro(resultado, alvo) {
   const presentes = new Set(resultado.reais.concat(resultado.previstos));
   const classes = Object.keys(cores).filter((classe) => presentes.has(classe));
 
-  desenharGrafico('grafico-erro', {
+  desenharGrafico('grafico-erro' + s, {
     type: 'bar',
     data: {
       labels: classes,
@@ -216,7 +236,7 @@ function graficoErro(resultado, alvo) {
 }
 
 // Erro médio (MAE) ou acurácia dos 10 fabricantes com mais veículos na amostra
-function graficoPorFabricante(resultado, alvo) {
+function graficoPorFabricante(resultado, alvo, s) {
   const indices = resultado.amostra.map((linha, i) => i);
   const grupos = agruparPor(resultado.amostra, indices, (linha) => linha[COL.fabricante]);
   const fabricantes = Object.keys(grupos)
@@ -233,7 +253,7 @@ function graficoPorFabricante(resultado, alvo) {
   });
   const rotulo = alvo === 'autonomia' ? 'MAE (milhas)' : 'Acurácia (%)';
 
-  desenharGrafico('grafico-por-fabricante', {
+  desenharGrafico('grafico-por-fabricante' + s, {
     type: 'bar',
     data: { labels: fabricantes, datasets: [{ label: rotulo, data: valores, backgroundColor: '#9333ea' }] },
     options: {
@@ -247,7 +267,7 @@ function graficoPorFabricante(resultado, alvo) {
 }
 
 // Mostra como as métricas mudaram ao longo dos treinamentos do alvo atual
-function graficoEvolucao(historico, alvo) {
+function graficoEvolucao(historico, alvo, s) {
   const treinos = historico.filter((treino) => treino.alvo === alvo);
   const rotulos = treinos.map((treino, i) => '#' + (i + 1) + ' ' + MODELOS[treino.modelo].nome);
 
@@ -262,7 +282,7 @@ function graficoEvolucao(historico, alvo) {
     datasets = [{ label: 'Acurácia', data: treinos.map((t) => t.metricas.acuracia), borderColor: '#2563eb', yAxisID: 'y1' }];
   }
 
-  desenharGrafico('grafico-evolucao', {
+  desenharGrafico('grafico-evolucao' + s, {
     type: 'line',
     data: { labels: rotulos, datasets },
     options: {
@@ -274,33 +294,51 @@ function graficoEvolucao(historico, alvo) {
   });
 }
 
-// Executa o treino, salva no histórico e atualiza a tela
+// Treina cada combinação variável × algoritmo marcada, salva no histórico e mostra um bloco por combinação
 function treinar() {
-  const alvo = document.getElementById('alvo').value;
-  const modelo = document.getElementById('modelo').value;
-  const parametros = lerParametros(modelo);
-
-  const resultado = treinarSimulado(linhasDoArquivo, alvo, modelo, parametros);
-  const metricas = alvo === 'autonomia'
-    ? metricasRegressao(resultado.reais, resultado.previstos)
-    : metricasClassificacao(resultado.reais, resultado.previstos);
+  if (!validarSelecao(['alvo', 'modelo'])) return;
 
   const historico = carregarHistorico();
-  historico.push({ data: new Date().toLocaleString('pt-BR'), alvo, modelo, parametros, metricas });
+  const treinos = [];
+  valoresMarcados('alvo').forEach((alvo) => {
+    valoresMarcados('modelo').forEach((modelo) => {
+      const parametros = lerParametros(modelo);
+      const resultado = treinarSimulado(linhasDoArquivo, alvo, modelo, parametros);
+      const metricas = alvo === 'autonomia'
+        ? metricasRegressao(resultado.reais, resultado.previstos)
+        : metricasClassificacao(resultado.reais, resultado.previstos);
+      historico.push({ data: new Date().toLocaleString('pt-BR'), alvo, modelo, parametros, metricas });
+      treinos.push({ alvo, modelo, resultado, metricas });
+    });
+  });
   salvarHistorico(historico);
 
-  mostrarMetricas(metricas);
-  graficoReaisVsPrevistos(resultado, alvo);
-  graficoEvolucao(historico, alvo);
-  graficoErro(resultado, alvo);
-  graficoPorFabricante(resultado, alvo);
+  // Desenha depois de salvar tudo, para o gráfico de evolução já incluir os treinos desta rodada
+  const resultados = document.getElementById('resultados');
+  apagarGraficos();
+  resultados.innerHTML = '';
+  treinos.forEach(({ alvo, modelo, resultado, metricas }, n) => {
+    const s = '-' + n;
+    resultados.appendChild(clonarBloco('modelo-bloco', s));
+    document.getElementById('titulo-bloco' + s).textContent = ALVOS[alvo] + ' · ' + MODELOS[modelo].nome;
+    mostrarMetricas(metricas, s);
+    graficoReaisVsPrevistos(resultado, alvo, s);
+    graficoEvolucao(historico, alvo, s);
+    graficoErro(resultado, alvo, s);
+    graficoPorFabricante(resultado, alvo, s);
+  });
 
-  document.getElementById('resultados').hidden = false;
-  mostrarMensagem('mensagem-treino', 'Novo modelo (' + MODELOS[modelo].nome + ' - ' + ALVOS[alvo] +
-    ') treinado e disponível na tela de Previsões.', 'sucesso');
+  const nomes = treinos.map(({ alvo, modelo }) => MODELOS[modelo].nome + ' - ' + ALVOS[alvo]).join(', ');
+  const texto = treinos.length === 1
+    ? 'Novo modelo (' + nomes + ') treinado e disponível na tela de Previsões.'
+    : treinos.length + ' novos modelos (' + nomes + ') treinados e disponíveis na tela de Previsões.';
+  document.getElementById('mensagem-treino').hidden = false;
+  mostrarMensagem('mensagem-treino', texto, 'sucesso');
 }
 
 document.getElementById('arquivo').addEventListener('change', aoSelecionarArquivo);
-document.getElementById('modelo').addEventListener('change', mostrarParametros);
+document.getElementById('alvo').addEventListener('change', aoMudarSelecao);
+document.getElementById('modelo').addEventListener('change', aoMudarSelecao);
 document.getElementById('botao-treinar').addEventListener('click', treinar);
-mostrarParametros();
+carregarOpcoesDeModelo();
+aoMudarSelecao();

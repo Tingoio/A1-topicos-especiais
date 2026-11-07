@@ -115,6 +115,132 @@ h2 {
   min-width: 0;
 }
 
+/* Painel que ocupa a largura toda da grade (gráfico do modelo nas Previsões) */
+.painel-largo {
+  grid-column: 1 / -1;
+}
+
+.painel-largo .descricao {
+  margin-bottom: 12px;
+}
+
+/* Diagrama da árvore de decisão: rola na horizontal em telas pequenas */
+.arvore-rolavel {
+  overflow-x: auto;
+}
+
+.arvore-rolavel svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.arvore-ramo {
+  stroke: #9ca3af;
+  stroke-width: 1.5;
+}
+
+.arvore-rotulo-ramo {
+  font-size: 11px;
+  fill: #6b7280;
+}
+
+.arvore-no rect {
+  fill: #dbeafe;
+  stroke: #2563eb;
+}
+
+.arvore-folha rect {
+  fill: #dcfce7;
+  stroke: #16a34a;
+}
+
+.arvore-texto-principal {
+  font-size: 13px;
+  font-weight: bold;
+  fill: #1f2937;
+}
+
+.arvore-texto-secundario {
+  font-size: 11px;
+  fill: #4b5563;
+}
+
+/* Diagrama da Random Forest */
+.floresta-linha {
+  fill: none;
+  stroke: #1e3a8a;
+  stroke-width: 1.8;
+}
+
+.floresta-seta {
+  fill: #1e3a8a;
+}
+
+.floresta-ramo {
+  stroke: #1e3a8a;
+  stroke-width: 1.5;
+}
+
+.floresta-no {
+  fill: #1e3a8a;
+  stroke: #1e3a8a;
+  stroke-width: 1.5;
+  cursor: help;
+}
+
+.floresta-no-caminho {
+  fill: #60a5fa;
+}
+
+.floresta-rotulo {
+  font-size: 13px;
+  fill: #374151;
+}
+
+.floresta-reticencias {
+  font-size: 28px;
+  font-weight: bold;
+  fill: #1e3a8a;
+}
+
+.floresta-dados rect {
+  fill: #fff;
+  stroke: #1e3a8a;
+  stroke-width: 2;
+}
+
+.floresta-dados text {
+  font-size: 14px;
+  font-weight: bold;
+  fill: #1e3a8a;
+}
+
+.floresta-resultado rect,
+.floresta-final rect {
+  fill: #60a5fa;
+  stroke: #1e3a8a;
+}
+
+.floresta-combinacao rect {
+  fill: #1e3a8a;
+}
+
+.floresta-resultado text,
+.floresta-combinacao text,
+.floresta-final text {
+  font-size: 13px;
+  fill: #0f172a;
+  font-weight: bold;
+}
+
+.floresta-combinacao text {
+  fill: #fff;
+}
+
+.floresta-final text {
+  font-size: 14px;
+}
+
 /* Formulários das telas de Previsões e Retreinamento */
 .formulario {
   display: flex;
@@ -130,6 +256,57 @@ h2 {
   gap: 4px;
   font-weight: bold;
   font-size: 14px;
+}
+
+/* Grupos de checkboxes: o usuário pode marcar várias opções */
+.opcoes {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opcoes legend {
+  font-weight: bold;
+  font-size: 14px;
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.formulario .opcoes label {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.opcoes input {
+  margin: 0;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* Aviso quando nenhuma caixinha do grupo está marcada */
+.erro-selecao {
+  margin: 0;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* Um bloco de resultados para cada combinação variável × modelo */
+.bloco-resultado {
+  margin-bottom: 32px;
+}
+
+.bloco-resultado > h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #1e3a8a;
 }
 
 /* Garante que o atributo hidden esconda também os labels (que usam display: flex) */

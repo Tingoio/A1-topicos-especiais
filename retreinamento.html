@@ -19,7 +19,7 @@
 
     <section class="painel formulario">
       <label>
-        Nova base CSV (até 100 MB, precisa conter Electric Range)
+        Nova base CSV - até 100 MB
         <input type="file" id="arquivo" accept=".csv">
       </label>
       <p id="mensagem-upload" class="mensagem info">
@@ -27,22 +27,17 @@
         Clean Alternative Fuel Vehicle (CAFV) Eligibility.
       </p>
 
-      <label>
-        Variável-alvo
-        <select id="alvo">
-          <option value="autonomia">Electric Range</option>
-          <option value="cafv">CAFV</option>
-        </select>
-      </label>
+      <fieldset id="alvo" class="opcoes">
+        <legend>Variável alvo</legend>
+        <label><input type="checkbox" value="autonomia" checked> Electric Range</label>
+        <label><input type="checkbox" value="cafv"> CAFV</label>
+        <p class="erro-selecao" hidden>Selecione ao menos uma opção.</p>
+      </fieldset>
 
-      <label>
-        Algoritmo
-        <select id="modelo">
-          <option value="linear">Regressão Linear</option>
-          <option value="arvore">Árvore de Decisão</option>
-          <option value="floresta">Random Forest</option>
-        </select>
-      </label>
+      <fieldset id="modelo" class="opcoes">
+        <legend>Algoritmo</legend>
+        <p class="erro-selecao" hidden>Selecione ao menos uma opção.</p>
+      </fieldset>
       <p id="descricao-modelo" class="descricao"></p>
 
       <p id="sem-parametros" class="descricao">Sem parâmetros obrigatórios na configuração básica.</p>
@@ -58,29 +53,35 @@
       <button id="botao-treinar" disabled>Treinar</button>
     </section>
 
-    <section id="resultados" hidden>
-      <p id="mensagem-treino" class="mensagem sucesso"></p>
-      <div id="metricas" class="cards"></div>
+    <p id="mensagem-treino" class="mensagem sucesso" hidden></p>
+    <div id="resultados"></div>
 
-      <div class="graficos">
-        <div class="painel">
-          <h2>Valores reais vs. previstos</h2>
-          <canvas id="grafico-reais-previstos"></canvas>
+    <!-- Copiado uma vez para cada combinação variável × algoritmo marcada -->
+    <template id="modelo-bloco">
+      <section class="bloco-resultado">
+        <h2 id="titulo-bloco"></h2>
+        <div id="metricas" class="cards"></div>
+
+        <div class="graficos">
+          <div class="painel">
+            <h2>Valores reais vs. previstos</h2>
+            <canvas id="grafico-reais-previstos"></canvas>
+          </div>
+          <div class="painel">
+            <h2>Evolução das métricas entre treinamentos</h2>
+            <canvas id="grafico-evolucao"></canvas>
+          </div>
+          <div class="painel">
+            <h2 id="titulo-erro">Distribuição do erro</h2>
+            <canvas id="grafico-erro"></canvas>
+          </div>
+          <div class="painel">
+            <h2>Desempenho por fabricante (top 10)</h2>
+            <canvas id="grafico-por-fabricante"></canvas>
+          </div>
         </div>
-        <div class="painel">
-          <h2>Evolução das métricas entre treinamentos</h2>
-          <canvas id="grafico-evolucao"></canvas>
-        </div>
-        <div class="painel">
-          <h2 id="titulo-erro">Distribuição do erro</h2>
-          <canvas id="grafico-erro"></canvas>
-        </div>
-        <div class="painel">
-          <h2>Desempenho por fabricante (top 10)</h2>
-          <canvas id="grafico-por-fabricante"></canvas>
-        </div>
-      </div>
-    </section>
+      </section>
+    </template>
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
