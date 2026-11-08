@@ -42,6 +42,54 @@
       <button id="botao-prever" disabled>Prever</button>
     </section>
 
+    <section id="desempenho" hidden>
+      <h2 class="titulo-secao">Desempenho no teste</h2>
+      <p class="descricao centralizado">
+        Teste de 20% dos dados, separado antes de medir. O modelo salvo em seguida usa a base inteira.
+      </p>
+      <div class="graficos">
+        <div class="painel">
+          <h2>Electric Range — erro</h2>
+          <p id="texto-erro-autonomia" class="descricao"></p>
+          <canvas id="grafico-erro-autonomia"></canvas>
+        </div>
+        <div class="painel">
+          <h2>Electric Range — porcentagem de acerto</h2>
+          <p id="texto-proximidade" class="descricao"></p>
+          <canvas id="grafico-proximidade"></canvas>
+        </div>
+        <div class="painel">
+          <h2>Electric Range — real × previsto (modelo linear)</h2>
+          <p id="texto-dispersao-linear" class="descricao"></p>
+          <canvas id="grafico-dispersao-linear"></canvas>
+        </div>
+        <div class="painel">
+          <h2>Electric Range — real × previsto (árvore)</h2>
+          <p id="texto-dispersao-arvore" class="descricao"></p>
+          <canvas id="grafico-dispersao-arvore"></canvas>
+        </div>
+        <div class="painel">
+          <h2>CAFV — porcentagem de acerto</h2>
+          <p id="texto-acerto-cafv" class="descricao"></p>
+          <canvas id="grafico-acerto-cafv"></canvas>
+        </div>
+        <div class="painel painel-largo">
+          <h2>CAFV — onde a acurácia acerta e erra</h2>
+          <p class="descricao">Cada linha é a classe real. Cada coluna é a classe prevista. Verde é acerto e vermelho é erro.</p>
+          <div class="matrizes">
+            <div>
+              <h3>Modelo linear</h3>
+              <div id="matriz-linear"></div>
+            </div>
+            <div>
+              <h3>Árvore</h3>
+              <div id="matriz-arvore"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div id="resultados"></div>
 
     <!-- Copiado uma vez para cada combinação variável × modelo marcada -->
@@ -88,7 +136,8 @@
             <h2 id="titulo-grafico-modelo">Modelo</h2>
             <p id="descricao-grafico-modelo" class="descricao"></p>
             <canvas id="grafico-modelo"></canvas>
-            <div id="arvore" class="arvore-rolavel" hidden></div>
+            <button type="button" id="expandir-arvore" class="expandir-arvore" hidden>Ver árvore</button>
+            <div id="arvore" hidden></div>
           </div>
         </div>
       </section>
@@ -98,7 +147,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
   <script src="../static/js/utils.js"></script>
-  <script src="../static/js/arvore.js"></script>
+  <script src="../static/js/desempenho.js"></script>
   <script src="../static/js/previsoes.js"></script>
 </body>
 </html>

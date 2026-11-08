@@ -25,12 +25,12 @@ const ALVOS = {
 // Modelos disponíveis e suas descrições
 const MODELOS = {
   linear: {
-    nome: 'Regressão Linear',
-    descricao: 'Identifica relações lineares entre as características e a autonomia.'
+    nome: 'Modelo linear',
+    descricao: 'Regressão linear para a autonomia e regressão logística para o CAFV.'
   },
   arvore: {
     nome: 'Árvore de Decisão',
-    descricao: 'Aprende regras e divisões das características para realizar previsões.'
+    descricao: 'Regras com profundidade máxima 16, escolhida pelo erro no teste.'
   },
   floresta: {
     nome: 'Random Forest',
@@ -122,6 +122,8 @@ const graficos = {};
 // Apaga todos os gráficos da página (antes de gerar um novo conjunto de resultados)
 function apagarGraficos() {
   Object.keys(graficos).forEach((id) => {
+    const canvas = document.getElementById(id);
+    if (!canvas || !canvas.closest('#resultados')) return;
     graficos[id].destroy();
     delete graficos[id];
   });

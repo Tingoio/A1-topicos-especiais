@@ -21,6 +21,9 @@ __pycache__/
 *.pyc
 .env
 
+# Modelos treinados (gerados por python -m src.treinar)
+modelos/
+
 # Logs
 *.log
 
