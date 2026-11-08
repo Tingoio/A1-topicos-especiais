@@ -1,7 +1,7 @@
 // dashboard.js — lê o dataset da pasta data/ e monta indicadores e gráficos.
 
 // O caminho precisa ser absoluto porque o PapaParse baixa o arquivo dentro de um worker
-const CAMINHO_DATASET = new URL('data/veiculos_eletricos.csv', location.href).href;
+const CAMINHO_DATASET = new URL('data/Electric_Vehicle_Population_Data_20261103.csv', location.href).href;
 
 // Totais acumulados enquanto o arquivo é lido em partes (chunks)
 const resumo = {

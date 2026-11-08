@@ -20,11 +20,11 @@ O servidor é necessário porque o navegador não permite que a página leia o a
 
 | Página | O que faz |
 | --- | --- |
-| `index.html` — Visão geral | Indicadores e gráficos do dataset em `data/` |
-| `previsoes.html` — Previsões | Upload de CSV, escolha do alvo (Electric Range ou CAFV) e do modelo, tabela e gráfico com as previsões |
-| `retreinamento.html` — Retreinamento | Upload de uma nova base, escolha do alvo, do algoritmo e dos parâmetros, métricas (MAE, RMSE, R²) e gráficos |
+| `templates/index.html` — Visão geral | Indicadores e gráficos do dataset em `data/` |
+| `templates/previsoes.html` — Previsões | Upload de CSV, escolha do alvo (Electric Range ou CAFV) e do modelo, tabela e gráfico com as previsões |
+| `templates/retreinamento.html` — Retreinamento | Upload de uma nova base, escolha do alvo, do algoritmo e dos parâmetros, métricas (MAE, RMSE, R²) e gráficos |
 
-Os uploads aceitam arquivos de até **100 MB** (constante `MAX_UPLOAD_MB` em `js/utils.js`).
+Os uploads aceitam arquivos de até **100 MB** (constante `MAX_UPLOAD_MB` em `static/js/utils.js`).
 
 ## Estrutura de pastas
 
