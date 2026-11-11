@@ -127,7 +127,9 @@ def exportar_coeficientes(pipeline: object, alvo: str, metricas: str) -> dict[st
     }
 
 
-def exportar_arvore(pipeline: object, alvo: str, metricas: str) -> dict[str, object]:
+def exportar_arvore(
+    pipeline: object, alvo: str, metricas: str, profundidade: int = 16
+) -> dict[str, object]:
     """A árvore salva inteira, no formato do diagrama da tela.
 
     Exemplo:
@@ -137,9 +139,13 @@ def exportar_arvore(pipeline: object, alvo: str, metricas: str) -> dict[str, obj
     nomes = list(pipeline.named_steps["prep"].get_feature_names_out())
     classes = list(getattr(estimador, "classes_", []))
     niveis = int(estimador.tree_.max_depth)
+    if profundidade == 16:
+        detalhe = f"Profundidade máxima 16, escolhida pelo erro no teste. O desenho tem {niveis} níveis. "
+    else:
+        detalhe = f"Profundidade máxima {profundidade}. O desenho tem {niveis} níveis. "
     return {
         "titulo": "Árvore de decisão",
-        "descricao": f"Profundidade máxima 16, escolhida pelo erro no teste. O desenho tem {niveis} níveis. " + metricas,
+        "descricao": detalhe + metricas,
         "raiz": _exportar_no(estimador.tree_, 0, nomes, classes, alvo),
     }
 

@@ -31,10 +31,6 @@ const MODELOS = {
   arvore: {
     nome: 'Árvore de Decisão',
     descricao: 'Regras com profundidade máxima 16, escolhida pelo erro no teste.'
-  },
-  floresta: {
-    nome: 'Random Forest',
-    descricao: 'Combina várias árvores de decisão para gerar previsões.'
   }
 };
 

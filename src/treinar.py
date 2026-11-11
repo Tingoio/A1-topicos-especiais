@@ -14,7 +14,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from src.explicacao import exportar_arvore, exportar_coeficientes
 from src.metricas import medir_classificacao, medir_regressao
-from src.previsor import ARQUIVOS
+from src.previsor import ORIGEM_PRE, nome_arquivo
 from src.preprocessing import carregar_e_limpar_dados
 from src.rotulos import COLUNAS_MODELO
 
@@ -46,7 +46,7 @@ def base_classificacao(dados: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     return dados[COLUNAS_MODELO], dados["cafv_status"]
 
 
-def criar_pipeline(alvo: str, modelo: str) -> Pipeline:
+def criar_pipeline(alvo: str, modelo: str, max_depth: int = PROFUNDIDADE_ARVORE) -> Pipeline:
     """Pipeline de treino. A logística padroniza o ano para conseguir convergir.
 
     Exemplo:
@@ -58,7 +58,7 @@ def criar_pipeline(alvo: str, modelo: str) -> Pipeline:
         ("ano", StandardScaler() if escalar_ano else "passthrough", ["model_year"]),
         ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=esparso), ["make", "model", "ev_type"]),
     ])
-    return Pipeline([("prep", preparo), ("modelo", _estimador(alvo, modelo))])
+    return Pipeline([("prep", preparo), ("modelo", _estimador(alvo, modelo, max_depth))])
 
 
 def treinar_todos(dados: pd.DataFrame, diretorio: Path) -> dict[str, dict[str, object]]:
@@ -73,7 +73,7 @@ def treinar_todos(dados: pd.DataFrame, diretorio: Path) -> dict[str, dict[str, o
         entradas, respostas = _bases(dados)[alvo]
         explicacoes[alvo] = {}
         for modelo in ("linear", "arvore"):
-            pipeline, metricas, desempenho = _ajustar(entradas, respostas, alvo, modelo)
+            pipeline, metricas, desempenho, *_ = _ajustar(entradas, respostas, alvo, modelo)
             _gravar_modelo(pipeline, diretorio, alvo, modelo)
             explicacoes[alvo][modelo] = _explicar(pipeline, alvo, modelo, metricas, desempenho)
     destino = diretorio / "explicacoes.json"
@@ -97,56 +97,67 @@ def _bases(dados: pd.DataFrame) -> dict[str, tuple[pd.DataFrame, pd.Series]]:
     return {"autonomia": base_regressao(dados), "cafv": base_classificacao(dados)}
 
 
-def _estimador(alvo: str, modelo: str) -> object:
+def _estimador(alvo: str, modelo: str, max_depth: int = PROFUNDIDADE_ARVORE) -> object:
     if modelo == "arvore" and alvo == "autonomia":
-        return DecisionTreeRegressor(max_depth=PROFUNDIDADE_ARVORE, random_state=SEMENTE)
+        return DecisionTreeRegressor(max_depth=max_depth, random_state=SEMENTE)
     if modelo == "arvore":
-        return DecisionTreeClassifier(max_depth=PROFUNDIDADE_ARVORE, random_state=SEMENTE)
+        return DecisionTreeClassifier(max_depth=max_depth, random_state=SEMENTE)
     if alvo == "autonomia":
         return LinearRegression()
     return LogisticRegression(max_iter=1000, random_state=SEMENTE)
 
 
 def _ajustar(
-    entradas: pd.DataFrame, respostas: pd.Series, alvo: str, modelo: str
-) -> tuple[Pipeline, str, dict[str, object]]:
-    pipeline = criar_pipeline(alvo, modelo)
+    entradas: pd.DataFrame,
+    respostas: pd.Series,
+    alvo: str,
+    modelo: str,
+    max_depth: int = PROFUNDIDADE_ARVORE,
+) -> tuple[Pipeline, str, dict[str, object], pd.DataFrame, pd.Series, object]:
+    pipeline = criar_pipeline(alvo, modelo, max_depth)
     estratificar = respostas if alvo == "cafv" else None
     treino_x, teste_x, treino_y, teste_y = train_test_split(
         entradas, respostas, test_size=0.2, random_state=SEMENTE, stratify=estratificar
     )
-    avaliacao = criar_pipeline(alvo, modelo)
+    avaliacao = criar_pipeline(alvo, modelo, max_depth)
     avaliacao.fit(treino_x, treino_y)
     # A métrica sai deste ajuste, que não viu o teste. O arquivo salvo usa a base inteira.
-    texto, desempenho = _medir(avaliacao, teste_x, teste_y, alvo)
+    texto, desempenho, previsto = _medir(avaliacao, teste_x, teste_y, alvo)
     pipeline.fit(entradas, respostas)
-    return pipeline, texto, desempenho
+    return pipeline, texto, desempenho, teste_x, teste_y, previsto
 
 
 def _medir(
     pipeline: Pipeline, teste_x: pd.DataFrame, teste_y: pd.Series, alvo: str
-) -> tuple[str, dict[str, object]]:
+) -> tuple[str, dict[str, object], object]:
     previsto = pipeline.predict(teste_x)
     if alvo == "autonomia":
         desempenho = medir_regressao(teste_y, previsto)
     else:
         desempenho = medir_classificacao(teste_y, previsto)
-    return str(desempenho["texto"]), desempenho
+    return str(desempenho["texto"]), desempenho, previsto
 
 
 def _explicar(
-    pipeline: Pipeline, alvo: str, modelo: str, metricas: str, desempenho: dict[str, object]
+    pipeline: Pipeline,
+    alvo: str,
+    modelo: str,
+    metricas: str,
+    desempenho: dict[str, object],
+    max_depth: int = PROFUNDIDADE_ARVORE,
 ) -> dict[str, object]:
     if modelo == "linear":
         explicacao = exportar_coeficientes(pipeline, alvo, metricas)
     else:
-        explicacao = exportar_arvore(pipeline, alvo, metricas)
+        explicacao = exportar_arvore(pipeline, alvo, metricas, max_depth)
     explicacao["desempenho"] = desempenho
     return explicacao
 
 
-def _gravar_modelo(pipeline: Pipeline, diretorio: Path, alvo: str, modelo: str) -> None:
-    joblib.dump(pipeline, diretorio / ARQUIVOS[(alvo, modelo)])
+def _gravar_modelo(
+    pipeline: Pipeline, diretorio: Path, alvo: str, modelo: str, origem: str = ORIGEM_PRE
+) -> None:
+    joblib.dump(pipeline, diretorio / nome_arquivo(alvo, modelo, origem))
 
 
 if __name__ == "__main__":

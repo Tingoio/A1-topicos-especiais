@@ -2,7 +2,8 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 from pathlib import Path
 import os
 
-from src.previsor import PrevisaoInvalida, prever_corpo
+from src.previsor import ORIGEM_RETREINADO, PrevisaoInvalida, esquecer_modelo, prever_corpo
+from src.retreinar import ARQUIVO_EXPLICACOES_RETREINADAS, RetreinoInvalido, retreinar_corpo
 
 app = Flask(__name__)
 
@@ -44,6 +45,30 @@ def api_explicacoes():
         caminho.read_text(encoding="utf-8"),
         mimetype="application/json; charset=utf-8",
     )
+
+
+@app.route("/api/explicacoes-retreinadas")
+def api_explicacoes_retreinadas():
+    caminho = Path(app.config["DIRETORIO_MODELOS"]) / ARQUIVO_EXPLICACOES_RETREINADAS
+    if not caminho.is_file():
+        return jsonify({})
+    return app.response_class(
+        caminho.read_text(encoding="utf-8"),
+        mimetype="application/json; charset=utf-8",
+    )
+
+
+@app.route("/api/retreinar", methods=["POST"])
+def api_retreinar():
+    diretorio = Path(app.config["DIRETORIO_MODELOS"])
+    try:
+        alvo, modelo, resultado = retreinar_corpo(request.get_json(silent=True), diretorio)
+    except RetreinoInvalido as erro:
+        return jsonify({"erro": str(erro)}), 400
+    except FileNotFoundError as erro:
+        return jsonify({"erro": str(erro)}), 503
+    esquecer_modelo(app.extensions["cache_modelos"], diretorio, alvo, modelo, ORIGEM_RETREINADO)
+    return jsonify(resultado)
 
 
 @app.route("/api/prever", methods=["POST"])

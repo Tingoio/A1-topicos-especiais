@@ -1,13 +1,11 @@
-// retreinamento.js — upload da nova base, configuração do modelo, treino simulado e métricas.
+// retreinamento.js — upload da nova base, configuração do modelo, treino no servidor e métricas.
 
 // Para treinar, o arquivo precisa das entradas + os valores reais dos dois alvos
 const COLUNAS_TREINO = [...COLUNAS_ENTRADA, COL.autonomia, COL.cafv];
 
-// Quantidade de registros usados no gráfico de reais vs. previstos
-const TAMANHO_AMOSTRA = 300;
-
-// Linhas válidas do CSV enviado
+// Linhas válidas do CSV enviado. O servidor é quem descarta Electric Range = 0, e só na autonomia.
 let linhasDoArquivo = [];
+let treinando = false;
 
 // Valida e lê o arquivo assim que ele é selecionado
 function aoSelecionarArquivo(evento) {
@@ -30,11 +28,11 @@ function aoSelecionarArquivo(evento) {
       return;
     }
 
-    // Electric Range = 0 significa "não pesquisado", então essas linhas não servem para treino
-    linhasDoArquivo = linhas.filter((linha) => Number(linha[COL.autonomia]) > 0);
+    linhasDoArquivo = linhas;
     aoMudarSelecao();
-    mostrarMensagem('mensagem-upload', 'Arquivo válido: ' + linhasDoArquivo.length.toLocaleString('pt-BR') +
-      ' registros com autonomia pesquisada (de ' + linhas.length.toLocaleString('pt-BR') + ').', 'sucesso');
+    const comAutonomia = linhas.filter((linha) => Number(linha[COL.autonomia]) > 0).length;
+    mostrarMensagem('mensagem-upload', 'Arquivo válido: ' + linhas.length.toLocaleString('pt-BR') +
+      ' registros (' + comAutonomia.toLocaleString('pt-BR') + ' com autonomia pesquisada).', 'sucesso');
   });
 }
 
@@ -54,9 +52,8 @@ function mostrarParametros() {
     descricao.appendChild(linha);
   });
 
-  const usaArvores = modelos.includes('arvore') || modelos.includes('floresta');
+  const usaArvores = modelos.includes('arvore');
   document.getElementById('campo-max-depth').hidden = !usaArvores;
-  document.getElementById('campo-n-estimators').hidden = !modelos.includes('floresta');
   document.getElementById('sem-parametros').hidden = !modelos.includes('linear') || usaArvores;
 }
 
@@ -64,70 +61,38 @@ function mostrarParametros() {
 function aoMudarSelecao() {
   const selecaoValida = validarSelecao(['alvo', 'modelo']);
   mostrarParametros();
-  document.getElementById('botao-treinar').disabled = linhasDoArquivo.length === 0 || !selecaoValida;
+  document.getElementById('botao-treinar').disabled = treinando || linhasDoArquivo.length === 0 || !selecaoValida;
 }
 
-// Lê os parâmetros preenchidos na tela
+// Lê os parâmetros preenchidos na tela. A regressão linear não tem parâmetro.
 function lerParametros(modelo) {
   const parametros = {};
   if (modelo !== 'linear') parametros.max_depth = Number(document.getElementById('max-depth').value);
-  if (modelo === 'floresta') parametros.n_estimators = Number(document.getElementById('n-estimators').value);
   return parametros;
 }
 
-// Taxa de erro simulada: Random Forest erra menos, árvores mais profundas erram menos
-function erroSimulado(modelo, parametros) {
-  if (modelo === 'linear') return 0.35;
-  if (modelo === 'arvore') return Math.max(0.1, 0.4 - parametros.max_depth * 0.03);
-  return Math.max(0.05, 0.3 - parametros.max_depth * 0.02 - parametros.n_estimators / 1000);
-}
-
-// TODO: trocar pela chamada ao backend
-// Treino SIMULADO: gera previsões "com erro" a partir dos valores reais de uma amostra.
-function treinarSimulado(linhas, alvo, modelo, parametros) {
-  const amostra = linhas.slice(0, TAMANHO_AMOSTRA);
-  const erro = erroSimulado(modelo, parametros);
-
-  if (alvo === 'autonomia') {
-    const reais = amostra.map((linha) => Number(linha[COL.autonomia]));
-    const previstos = reais.map((real) => Math.round(real * (1 + (Math.random() * 2 - 1) * erro)));
-    return { amostra, reais, previstos };
-  }
-
-  const reais = amostra.map((linha) => nomeCafv(linha[COL.cafv]));
-  const previstos = reais.map((real) => {
-    if (Math.random() > erro) return real;
-    return real === 'Elegível' ? 'Não elegível' : 'Elegível';
+// Uma combinação por pedido, no mesmo formato de /api/prever, mais os alvos reais.
+async function treinarNoServidor(linhas, alvo, modelo, parametros) {
+  const resposta = await fetch('/api/retreinar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      alvo: alvo,
+      modelo: modelo,
+      parametros: parametros,
+      linhas: linhas.map((linha) => ({
+        'Model Year': linha[COL.ano],
+        Make: linha[COL.fabricante],
+        Model: linha[COL.modelo],
+        'Electric Vehicle Type': linha[COL.tipo],
+        'Electric Range': linha[COL.autonomia],
+        'Clean Alternative Fuel Vehicle (CAFV) Eligibility': linha[COL.cafv]
+      }))
+    })
   });
-  return { amostra, reais, previstos };
-}
-
-// Calcula MAE, RMSE e R² a partir dos valores reais e previstos
-function metricasRegressao(reais, previstos) {
-  const n = reais.length;
-  const media = reais.reduce((soma, valor) => soma + valor, 0) / n;
-
-  let somaErroAbsoluto = 0;
-  let somaErroQuadrado = 0;
-  let somaVariancia = 0;
-  reais.forEach((real, i) => {
-    const diferenca = real - previstos[i];
-    somaErroAbsoluto += Math.abs(diferenca);
-    somaErroQuadrado += diferenca * diferenca;
-    somaVariancia += (real - media) * (real - media);
-  });
-
-  return {
-    mae: somaErroAbsoluto / n,
-    rmse: Math.sqrt(somaErroQuadrado / n),
-    r2: 1 - somaErroQuadrado / somaVariancia
-  };
-}
-
-// Para o CAFV (classificação) a métrica é a acurácia: % de acertos
-function metricasClassificacao(reais, previstos) {
-  const acertos = reais.filter((real, i) => real === previstos[i]).length;
-  return { acuracia: acertos / reais.length };
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) throw new Error(corpo.erro || 'Falha ao treinar o modelo.');
+  return corpo;
 }
 
 // Escreve as métricas nos cards
@@ -165,7 +130,7 @@ function graficoReaisVsPrevistos(resultado, alvo, s) {
   // CAFV: compara a quantidade real e prevista de cada classe
   const reais = contarValores(resultado.reais);
   const previstos = contarValores(resultado.previstos);
-  const classes = ['Elegível', 'Não elegível'];
+  const classes = ['Elegível', 'Não elegível', 'Desconhecido'];
   desenharGrafico('grafico-reais-previstos' + s, {
     type: 'bar',
     data: {
@@ -294,26 +259,8 @@ function graficoEvolucao(historico, alvo, s) {
   });
 }
 
-// Treina cada combinação variável × algoritmo marcada, salva no histórico e mostra um bloco por combinação
-function treinar() {
-  if (!validarSelecao(['alvo', 'modelo'])) return;
-
-  const historico = carregarHistorico();
-  const treinos = [];
-  valoresMarcados('alvo').forEach((alvo) => {
-    valoresMarcados('modelo').forEach((modelo) => {
-      const parametros = lerParametros(modelo);
-      const resultado = treinarSimulado(linhasDoArquivo, alvo, modelo, parametros);
-      const metricas = alvo === 'autonomia'
-        ? metricasRegressao(resultado.reais, resultado.previstos)
-        : metricasClassificacao(resultado.reais, resultado.previstos);
-      historico.push({ data: new Date().toLocaleString('pt-BR'), alvo, modelo, parametros, metricas });
-      treinos.push({ alvo, modelo, resultado, metricas });
-    });
-  });
-  salvarHistorico(historico);
-
-  // Desenha depois de salvar tudo, para o gráfico de evolução já incluir os treinos desta rodada
+// Desenha um bloco por combinação. O histórico já inclui os treinos desta rodada.
+function desenharTreinos(historico, treinos) {
   const resultados = document.getElementById('resultados');
   apagarGraficos();
   resultados.innerHTML = '';
@@ -327,6 +274,52 @@ function treinar() {
     graficoErro(resultado, alvo, s);
     graficoPorFabricante(resultado, alvo, s);
   });
+}
+
+// Treina cada combinação variável × algoritmo marcada, uma de cada vez.
+async function treinar() {
+  if (!validarSelecao(['alvo', 'modelo'])) return;
+
+  const botao = document.getElementById('botao-treinar');
+  const textoBotao = botao.textContent;
+  const alvos = valoresMarcados('alvo');
+  const modelos = valoresMarcados('modelo');
+  treinando = true;
+  botao.disabled = true;
+  botao.textContent = 'Treinando...';
+  document.getElementById('mensagem-treino').hidden = false;
+  mostrarMensagem('mensagem-treino', 'Treinando...', 'info');
+
+  const historico = carregarHistorico();
+  const treinos = [];
+  let falha = null;
+  try {
+    for (const alvo of alvos) {
+      for (const modelo of modelos) {
+        const parametros = lerParametros(modelo);
+        const resultado = await treinarNoServidor(linhasDoArquivo, alvo, modelo, parametros);
+        const metricas = resultado.metricas;
+        historico.push({ data: new Date().toLocaleString('pt-BR'), alvo, modelo, parametros, metricas });
+        treinos.push({ alvo, modelo, resultado, metricas });
+      }
+    }
+  } catch (erro) {
+    falha = erro;
+  } finally {
+    treinando = false;
+    botao.textContent = textoBotao;
+    aoMudarSelecao();
+  }
+
+  if (treinos.length > 0) {
+    salvarHistorico(historico);
+    desenharTreinos(historico, treinos);
+  }
+  if (falha) {
+    document.getElementById('mensagem-treino').hidden = false;
+    mostrarMensagem('mensagem-treino', falha.message, 'erro');
+    return;
+  }
 
   const nomes = treinos.map(({ alvo, modelo }) => MODELOS[modelo].nome + ' - ' + ALVOS[alvo]).join(', ');
   const texto = treinos.length === 1

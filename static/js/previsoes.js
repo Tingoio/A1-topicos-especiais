@@ -6,32 +6,65 @@ const LINHAS_NA_TABELA = 100;
 // Linhas do CSV enviado (ficam vazias até um arquivo válido ser carregado)
 let linhasDoArquivo = [];
 
-// Os dois modelos fixos, gravados em modelos/. A floresta continua só na tela de Retreinamento.
-// tipo = chave em MODELOS (linear ou arvore), usada para escolher o gráfico do modelo.
+// Os dois modelos fixos, gravados em modelos/. O retreinado entra na lista quando o arquivo existe.
+// tipo = chave em MODELOS (linear ou arvore). origem = pre ou retreinado.
 const MODELOS_FIXOS = ['linear', 'arvore'];
 const opcoesDeModelo = [];
 
 // Explicação (coeficientes ou árvore) carregada de /api/explicacoes
 let explicacoes = null;
+// Mesma forma, só com os pares que já foram retreinados.
+let explicacoesRetreinadas = {};
 
 // Monta os checkboxes de modelo (o primeiro já vem marcado)
-function carregarOpcoesDeModelo() {
+async function carregarOpcoesDeModelo() {
   MODELOS_FIXOS.forEach((chave) => {
-    opcoesDeModelo.push({ nome: MODELOS[chave].nome, tipo: chave });
+    opcoesDeModelo.push({ nome: MODELOS[chave].nome, tipo: chave, origem: 'pre' });
+  });
+  explicacoesRetreinadas = await buscarExplicacoesRetreinadas();
+  MODELOS_FIXOS.forEach((chave) => {
+    if (!temRetreinado(chave)) return;
+    opcoesDeModelo.push({
+      nome: MODELOS[chave].nome + ' (retreinado)',
+      tipo: chave,
+      origem: 'retreinado'
+    });
   });
 
   opcoesDeModelo.forEach((opcao, i) => adicionarCheckbox('modelo', i, opcao.nome, i === 0));
   aoMudarSelecao();
 }
 
-// Mostra a descrição de cada modelo marcado (uma linha por tipo de modelo)
+// O arquivo pode não existir ainda. Nesse caso a lista fica só com os modelos originais.
+async function buscarExplicacoesRetreinadas() {
+  try {
+    const resposta = await fetch('/api/explicacoes-retreinadas');
+    if (!resposta.ok) return {};
+    const corpo = await resposta.json();
+    return corpo && typeof corpo === 'object' ? corpo : {};
+  } catch (erro) {
+    return {};
+  }
+}
+
+// O checkbox do algoritmo aparece se ele foi retreinado para ao menos um alvo.
+function temRetreinado(chave) {
+  return Object.values(explicacoesRetreinadas).some((porAlvo) => porAlvo && porAlvo[chave]);
+}
+
+// Mostra a descrição de cada modelo marcado (uma linha por tipo e origem)
 function mostrarDescricaoDosModelos() {
   const descricao = document.getElementById('descricao-modelo');
   descricao.innerHTML = '';
-  const tipos = new Set(valoresMarcados('modelo').map((indice) => opcoesDeModelo[indice].tipo));
-  tipos.forEach((tipo) => {
+  const vistos = new Set();
+  valoresMarcados('modelo').forEach((indice) => {
+    const opcao = opcoesDeModelo[indice];
+    const chave = opcao.tipo + '|' + opcao.origem;
+    if (vistos.has(chave)) return;
+    vistos.add(chave);
+    const sufixo = opcao.origem === 'retreinado' ? ' (retreinado)' : '';
     const linha = document.createElement('div');
-    linha.textContent = MODELOS[tipo].nome + ': ' + MODELOS[tipo].descricao;
+    linha.textContent = MODELOS[opcao.tipo].nome + sufixo + ': ' + MODELOS[opcao.tipo].descricao;
     descricao.appendChild(linha);
   });
 }
@@ -81,13 +114,14 @@ async function garantirExplicacoes() {
 }
 
 // Envia os veículos para o modelo salvo e devolve uma previsão por linha.
-async function preverNoServidor(linhas, alvo, modelo) {
+async function preverNoServidor(linhas, alvo, modelo, origem) {
   const resposta = await fetch('/api/prever', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       alvo: alvo,
       modelo: modelo,
+      origem: origem,
       linhas: linhas.map((linha) => ({
         'Model Year': linha[COL.ano],
         Make: linha[COL.fabricante],
@@ -193,8 +227,9 @@ function graficoPorAno(linhas, previsoes, alvo, s) {
 // ---------- Gráfico do modelo escolhido ----------
 
 // Coeficientes do arquivo salvo, ou todos os níveis da árvore salva.
-function graficoDoModelo(alvo, modelo, s) {
-  const explicacao = explicacoes && explicacoes[alvo] && explicacoes[alvo][modelo];
+function graficoDoModelo(alvo, modelo, origem, s) {
+  const fonte = origem === 'retreinado' ? explicacoesRetreinadas : explicacoes;
+  const explicacao = fonte && fonte[alvo] && fonte[alvo][modelo];
   if (!explicacao) {
     document.getElementById('titulo-grafico-modelo' + s).textContent = 'Modelo';
     document.getElementById('descricao-grafico-modelo' + s).textContent = 'Explicação do modelo indisponível.';
@@ -374,7 +409,7 @@ function desenharRamo(svg, filho, rotulo, x, y, larguraColuna, alturaLinha, altu
 
 // Faz a previsão de uma combinação variável × modelo e preenche o bloco com o sufixo s
 async function preverCombinacao(alvo, opcao, s) {
-  const previsoes = await preverNoServidor(linhasDoArquivo, alvo, opcao.tipo);
+  const previsoes = await preverNoServidor(linhasDoArquivo, alvo, opcao.tipo, opcao.origem);
 
   document.getElementById('titulo-bloco' + s).textContent = ALVOS[alvo] + ' · ' + opcao.nome;
   document.getElementById('total-processados' + s).textContent = linhasDoArquivo.length.toLocaleString('pt-BR');
@@ -386,7 +421,7 @@ async function preverCombinacao(alvo, opcao, s) {
   graficoPrevisoes(previsoes, alvo, s);
   graficoPorTipo(linhasDoArquivo, previsoes, alvo, s);
   graficoPorAno(linhasDoArquivo, previsoes, alvo, s);
-  graficoDoModelo(alvo, opcao.tipo, s);
+  graficoDoModelo(alvo, opcao.tipo, opcao.origem, s);
 }
 
 // Executa a previsão para cada variável e cada modelo marcados (um bloco de resultados por combinação)

@@ -1,1 +1,1 @@
-"""Código Python do trabalho: limpeza, treino e previsão."""
+"""Código Python do trabalho: limpeza, treino, retreino e previsão."""
