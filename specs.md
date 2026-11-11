@@ -49,7 +49,6 @@ Objetivo: permitir que o usuário envie um arquivo CSV para realizar previsões 
 | ----------------- | ---------------------------------------------------------------------- |
 | Regressão Linear  | Identifica relações lineares entre as características e a autonomia.   |
 | Árvore de Decisão | Aprende regras e divisões das características para realizar previsões. |
-| Random Forest     | Combina várias árvores de decisão para gerar previsões.                |
 
 #### Resultados apresentados
 
@@ -81,7 +80,6 @@ Objetivo: permitir que o usuário atualize o modelo utilizando novos dados.
 | ----------------- | --------------------------------------------------------------------------- |
 | Regressão Linear  | Sem parâmetros obrigatórios na configuração básica.                         |
 | Árvore de Decisão | Profundidade máxima (`max_depth`).                                          |
-| Random Forest     | Quantidade de árvores (`n_estimators`) e profundidade máxima (`max_depth`). |
 
 #### Métricas de avaliação
 
@@ -95,4 +93,4 @@ Objetivo: permitir que o usuário atualize o modelo utilizando novos dados.
 - Comparação do desempenho entre modelos.
 - Evolução das métricas entre treinamentos.
 
-Observação: o CSV utilizado para retreinamento precisa conter a variável `Electric Range`, pois os valores reais são necessários para o aprendizado supervisionado.
+Observação: o CSV de retreinamento precisa das colunas de entrada, de `Electric Range` e da elegibilidade CAFV. Autonomia igual a zero fica de fora só do treino de `Electric Range`. O modelo original continua disponível; o retreinado entra na previsão só para o par alvo e algoritmo que foi treinado.
