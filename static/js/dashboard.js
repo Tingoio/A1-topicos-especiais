@@ -265,5 +265,5 @@ Papa.parse(CAMINHO_DATASET, {
     parte.data.forEach(contarLinha);
   },
   complete: finalizarLeitura,
-  error: () => mostrarMensagem('status', 'Não foi possível carregar o dataset. Rode o projeto com "python -m http.server".', 'erro')
+  error: () => mostrarMensagem('status', 'Não foi possível carregar o dataset. Rode o projeto com "python app.py".', 'erro')
 });

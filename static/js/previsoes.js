@@ -6,7 +6,8 @@ const LINHAS_NA_TABELA = 100;
 // Linhas do CSV enviado (ficam vazias até um arquivo válido ser carregado)
 let linhasDoArquivo = [];
 
-// Os dois modelos fixos, gravados em modelos/. O retreinado entra na lista quando o arquivo existe.
+// Os dois modelos fixos, gravados em modelos/. O retreinado entra na lista
+// só quando existe para todos os alvos marcados.
 // tipo = chave em MODELOS (linear ou arvore). origem = pre ou retreinado.
 const MODELOS_FIXOS = ['linear', 'arvore'];
 const opcoesDeModelo = [];
@@ -18,20 +19,8 @@ let explicacoesRetreinadas = {};
 
 // Monta os checkboxes de modelo (o primeiro já vem marcado)
 async function carregarOpcoesDeModelo() {
-  MODELOS_FIXOS.forEach((chave) => {
-    opcoesDeModelo.push({ nome: MODELOS[chave].nome, tipo: chave, origem: 'pre' });
-  });
   explicacoesRetreinadas = await buscarExplicacoesRetreinadas();
-  MODELOS_FIXOS.forEach((chave) => {
-    if (!temRetreinado(chave)) return;
-    opcoesDeModelo.push({
-      nome: MODELOS[chave].nome + ' (retreinado)',
-      tipo: chave,
-      origem: 'retreinado'
-    });
-  });
-
-  opcoesDeModelo.forEach((opcao, i) => adicionarCheckbox('modelo', i, opcao.nome, i === 0));
+  montarCheckboxesDeModelo();
   aoMudarSelecao();
 }
 
@@ -47,9 +36,47 @@ async function buscarExplicacoesRetreinadas() {
   }
 }
 
-// O checkbox do algoritmo aparece se ele foi retreinado para ao menos um alvo.
-function temRetreinado(chave) {
-  return Object.values(explicacoesRetreinadas).some((porAlvo) => porAlvo && porAlvo[chave]);
+function chaveDaOpcao(opcao) {
+  return opcao.tipo + '|' + opcao.origem;
+}
+
+// O par existe só quando aquele alvo e aquele algoritmo foram retreinados juntos.
+function parRetreinado(alvo, modelo) {
+  const porAlvo = explicacoesRetreinadas[alvo];
+  return Boolean(porAlvo && porAlvo[modelo]);
+}
+
+// Os originais ficam sempre. O retreinado só entra se existir para todos os alvos marcados.
+function montarCheckboxesDeModelo() {
+  const anteriores = new Set(
+    valoresMarcados('modelo').map((indice) => opcoesDeModelo[indice]).filter(Boolean).map(chaveDaOpcao)
+  );
+  opcoesDeModelo.length = 0;
+  MODELOS_FIXOS.forEach((chave) => {
+    opcoesDeModelo.push({ nome: MODELOS[chave].nome, tipo: chave, origem: 'pre' });
+  });
+  const alvos = valoresMarcados('alvo');
+  MODELOS_FIXOS.forEach((chave) => {
+    if (alvos.length === 0 || !alvos.every((alvo) => parRetreinado(alvo, chave))) return;
+    opcoesDeModelo.push({
+      nome: MODELOS[chave].nome + ' (retreinado)',
+      tipo: chave,
+      origem: 'retreinado'
+    });
+  });
+
+  document.querySelectorAll('#modelo label').forEach((label) => label.remove());
+  opcoesDeModelo.forEach((opcao, i) => {
+    const marcado = anteriores.size === 0 ? i === 0 : anteriores.has(chaveDaOpcao(opcao));
+    adicionarCheckbox('modelo', i, opcao.nome, marcado);
+  });
+}
+
+function descricaoDaOpcao(opcao) {
+  if (opcao.origem === 'retreinado' && opcao.tipo === 'arvore') {
+    return 'Regras com a profundidade máxima escolhida no retreinamento.';
+  }
+  return MODELOS[opcao.tipo].descricao;
 }
 
 // Mostra a descrição de cada modelo marcado (uma linha por tipo e origem)
@@ -59,12 +86,12 @@ function mostrarDescricaoDosModelos() {
   const vistos = new Set();
   valoresMarcados('modelo').forEach((indice) => {
     const opcao = opcoesDeModelo[indice];
-    const chave = opcao.tipo + '|' + opcao.origem;
+    const chave = chaveDaOpcao(opcao);
     if (vistos.has(chave)) return;
     vistos.add(chave);
     const sufixo = opcao.origem === 'retreinado' ? ' (retreinado)' : '';
     const linha = document.createElement('div');
-    linha.textContent = MODELOS[opcao.tipo].nome + sufixo + ': ' + MODELOS[opcao.tipo].descricao;
+    linha.textContent = MODELOS[opcao.tipo].nome + sufixo + ': ' + descricaoDaOpcao(opcao);
     descricao.appendChild(linha);
   });
 }
@@ -457,7 +484,10 @@ async function prever() {
 }
 
 document.getElementById('arquivo').addEventListener('change', aoSelecionarArquivo);
-document.getElementById('alvo').addEventListener('change', aoMudarSelecao);
+document.getElementById('alvo').addEventListener('change', () => {
+  montarCheckboxesDeModelo();
+  aoMudarSelecao();
+});
 document.getElementById('modelo').addEventListener('change', aoMudarSelecao);
 document.getElementById('botao-prever').addEventListener('click', prever);
 carregarOpcoesDeModelo();

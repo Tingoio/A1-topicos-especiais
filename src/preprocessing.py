@@ -33,6 +33,15 @@ def simplificar_cafv(status: object) -> str:
     return 'Desconhecido'
 
 
+def preencher_ano(serie: pd.Series) -> pd.Series:
+    """Ano vazio recebe a mediana dos anos da própria tabela. Sem nenhum ano, fica 0."""
+    anos = pd.to_numeric(serie, errors='coerce')
+    mediana = anos.median()
+    if pd.isna(mediana):
+        mediana = 0
+    return anos.fillna(mediana)
+
+
 def limpar_tabela(df: pd.DataFrame) -> pd.DataFrame:
     """Aplica o tratamento do CSV oficial a uma tabela já carregada.
 
@@ -42,8 +51,7 @@ def limpar_tabela(df: pd.DataFrame) -> pd.DataFrame:
     dados = df.rename(columns=MAPEAMENTO_COLUNAS)
     dados['cafv_status'] = dados['cafv_eligibility'].apply(simplificar_cafv)
     dados['electric_range'] = pd.to_numeric(dados['electric_range'], errors='coerce').fillna(0)
-    anos = pd.to_numeric(dados['model_year'], errors='coerce')
-    dados['model_year'] = anos.fillna(anos.median())
+    dados['model_year'] = preencher_ano(dados['model_year'])
     return dados
 
 

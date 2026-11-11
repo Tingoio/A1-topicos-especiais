@@ -186,7 +186,7 @@ function siglaTipo(tipo) {
   return sigla ? sigla[1] : tipo;
 }
 
-// Histórico de treinamentos salvo no navegador (usado no Retreinamento e nas Previsões)
+// Histórico de treinamentos salvo no navegador (usado na tela de Retreinamento)
 function carregarHistorico() {
   try {
     return JSON.parse(localStorage.getItem('historicoTreinos')) || [];

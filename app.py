@@ -65,8 +65,6 @@ def api_retreinar():
         alvo, modelo, resultado = retreinar_corpo(request.get_json(silent=True), diretorio)
     except RetreinoInvalido as erro:
         return jsonify({"erro": str(erro)}), 400
-    except FileNotFoundError as erro:
-        return jsonify({"erro": str(erro)}), 503
     esquecer_modelo(app.extensions["cache_modelos"], diretorio, alvo, modelo, ORIGEM_RETREINADO)
     return jsonify(resultado)
 

@@ -48,7 +48,10 @@ function mostrarParametros() {
   descricao.innerHTML = '';
   modelos.forEach((modelo) => {
     const linha = document.createElement('div');
-    linha.textContent = MODELOS[modelo].nome + ': ' + MODELOS[modelo].descricao;
+    const texto = modelo === 'arvore'
+      ? 'Regras com a profundidade máxima escolhida abaixo.'
+      : MODELOS[modelo].descricao;
+    linha.textContent = MODELOS[modelo].nome + ': ' + texto;
     descricao.appendChild(linha);
   });
 

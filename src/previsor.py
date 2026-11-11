@@ -5,6 +5,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
+from src.preprocessing import preencher_ano
 from src.rotulos import ALVOS, COLUNAS_MODELO, COLUNAS_UPLOAD, MODELOS, ROTULOS_EXIBICAO
 
 ARQUIVOS: dict[tuple[str, str], str] = {
@@ -93,7 +94,7 @@ def montar_entrada(linhas: list[object]) -> pd.DataFrame:
             f"colunas ausentes: {faltando}; esperado {list(COLUNAS_UPLOAD)}"
         )
     entrada = tabela.rename(columns=COLUNAS_UPLOAD)[COLUNAS_MODELO].copy()
-    entrada["model_year"] = pd.to_numeric(entrada["model_year"], errors="coerce").fillna(0)
+    entrada["model_year"] = preencher_ano(entrada["model_year"])
     for coluna in ("make", "model", "ev_type"):
         entrada[coluna] = entrada[coluna].fillna("").astype(str)
     return entrada

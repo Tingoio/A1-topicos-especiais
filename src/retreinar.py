@@ -41,9 +41,7 @@ def retreinar_corpo(corpo: object, diretorio: Path) -> tuple[str, str, dict[str,
             entradas, respostas, alvo, modelo, profundidade
         )
     except ValueError as erro:
-        raise RetreinoInvalido(
-            "base pequena demais para o corte de 20%, ou o CAFV não tem linhas suficientes em cada classe"
-        ) from erro
+        raise RetreinoInvalido(_mensagem_de_ajuste(erro)) from erro
     diretorio.mkdir(parents=True, exist_ok=True)
     _gravar_modelo(pipeline, diretorio, alvo, modelo, ORIGEM_RETREINADO)
     explicacao = _explicar(pipeline, alvo, modelo, texto, desempenho, profundidade)
@@ -101,6 +99,22 @@ def _base(dados: pd.DataFrame, alvo: str) -> tuple[pd.DataFrame, pd.Series]:
     if alvo == "autonomia":
         return base_regressao(dados)
     return base_classificacao(dados)
+
+
+def _mensagem_de_ajuste(erro: ValueError) -> str:
+    """O corte de 20% tem uma frase fixa. Os outros erros de ajuste aparecem como vieram."""
+    texto = str(erro).lower()
+    if (
+        "least populated class" in texto
+        or "n_samples" in texto
+        or "test_size" in texto
+        or "train set will be empty" in texto
+    ):
+        return (
+            "base pequena demais para o corte de 20%, "
+            "ou o CAFV não tem linhas suficientes em cada classe"
+        )
+    return str(erro)
 
 
 def _validar_base(respostas: pd.Series, alvo: str) -> None:
