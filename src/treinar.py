@@ -18,7 +18,8 @@ from src.previsor import ORIGEM_PRE, nome_arquivo
 from src.preprocessing import carregar_e_limpar_dados
 from src.rotulos import COLUNAS_MODELO
 
-PROFUNDIDADE_ARVORE = 16
+# A partir de 12 o erro em configurações novas para de cair; aprofundar só decora mais (ver README).
+PROFUNDIDADE_ARVORE = 12
 SEMENTE = 42
 CAMINHO_CSV = (
     Path(__file__).resolve().parents[1]
@@ -132,6 +133,8 @@ def _medir(
 ) -> tuple[str, dict[str, object], object]:
     previsto = pipeline.predict(teste_x)
     if alvo == "autonomia":
+        # Mesmo limite da tela de Previsões, para a métrica medir o que o usuário vê.
+        previsto = previsto.clip(min=0)
         desempenho = medir_regressao(teste_y, previsto)
     else:
         desempenho = medir_classificacao(teste_y, previsto)

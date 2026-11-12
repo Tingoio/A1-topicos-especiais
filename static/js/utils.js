@@ -30,7 +30,7 @@ const MODELOS = {
   },
   arvore: {
     nome: 'Árvore de Decisão',
-    descricao: 'Regras com profundidade máxima 16, escolhida pelo erro no teste.'
+    descricao: 'Regras com profundidade máxima 12.'
   }
 };
 

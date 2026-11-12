@@ -101,13 +101,14 @@ def montar_entrada(linhas: list[object]) -> pd.DataFrame:
 
 
 def formatar_previsoes(valores: object, alvo: str) -> list[float | str]:
-    """Autonomia em milhas com 1 casa; CAFV nos rótulos curtos da tela.
+    """Autonomia em milhas com 1 casa, nunca negativa; CAFV nos rótulos curtos da tela.
 
     Exemplo:
         formatar_previsoes([210.26], "autonomia")
     """
     if alvo == "autonomia":
-        return [round(float(valor), 1) for valor in valores]
+        # A regressão linear pode passar de zero para baixo; autonomia negativa não existe.
+        return [max(0.0, round(float(valor), 1)) for valor in valores]
     return [ROTULOS_EXIBICAO.get(str(valor), str(valor)) for valor in valores]
 
 
